@@ -10,16 +10,27 @@ from urllib.parse import urlencode, urlparse, parse_qs
 def setup():
     print("Complete the Spotify API setup to get your client_id and client_secret")
     print("https://developer.spotify.com/documentation/web-api/tutorials/getting-started")
-    client_id = input("Enter your client_id: ")
-    client_secret = input("Enter your client_secret: ")
-    with open("config.json", "w") as f:
-        json.dump({"client_id": client_id, "client_secret": client_secret}, f)
+    with open("config.json", "r") as f:
+        config = json.load(f)
+    client_id, client_secret = config.get("client_id"), config.get("client_secret")
+    if not client_id or not client_secret:
+        print("Client ID and client secret not set up")
+        client_id = input("Enter your client_id: ")
+        client_secret = input("Enter your client_secret: ")
+        config["client_id"] = client_id
+        config["client_secret"] = client_secret
+        with open("config.json", "w") as f:
+            json.dump(config, f)
     access_token = get_client_access_token()
     if not access_token:
         print("Setup failed")
         return
     user_access_token = user_login()
     if not user_access_token:
+        print("Setup failed")
+        return
+    gemini_api_key = get_gemini_api_key()
+    if not gemini_api_key:
         print("Setup failed")
         return
     print("Setup complete")
@@ -110,3 +121,14 @@ def user_login():
         json.dump(config, f)
 
     return user_access_token, device_id
+
+def get_gemini_api_key():
+    with open("config.json", "r") as f:
+        config = json.load(f)
+    gemini_api_key = config.get("gemini_api_key")
+    if not gemini_api_key:
+        gemini_api_key = input("Enter your Gemini API key: ")
+        config["gemini_api_key"] = gemini_api_key
+        with open("config.json", "w") as f:
+            json.dump(config, f)
+    return gemini_api_key
